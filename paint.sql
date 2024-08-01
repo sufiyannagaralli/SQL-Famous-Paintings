@@ -1,3 +1,4 @@
+-- Using database painting
 use painting;
 
 select * from artist;
@@ -15,32 +16,32 @@ select * from product_size1;
 SELECT data_type
 FROM information_schema.columns
 WHERE table_name = 'product_size1'
- AND column_name = 'size_id';
+AND column_name = 'size_id';
 
--- Fetch all the paintings which are not displayed on any museums?
--- Total we got 10223 rows as output which are not displayed in any museum.
+-- Fetch all the paintings which are not displayed in any museums?
+-- In Total we got 10223 rows as output which are not displayed in any museum.
 
 select * from work where museum_id is null;
 
 
--- Are there museuems without any paintings?
+-- Are there museums without any paintings?
 /* For this task, we utilized a correlated subquery to identify museum IDs that do not match 
 between two tables, So there were no museums without painting*/
 
 select * from museum m
 where not exists (select 1 from work w
-				  where w.museum_id=m.museum_id)
+where w.museum_id=m.museum_id)
 
 
 -- How many paintings have an asking price of more than their regular price? 
--- There are no painting who's asking price is more then regular price.
+-- There are no paintings whose asking price is more then regular price.
 
 select * from product_size
 where sale_price > regular_price;
 
 
 -- Identify the paintings whose asking price is less than 50% of its regular price?
--- There are total 58 painting who's asking price is less than 50% of its regular price.
+-- There are a total 58 painting who's asking price is less than 50% of its regular price.
 
 select * 
 from product_size
@@ -82,13 +83,13 @@ where  city like '[0-9]%'
 -- We utilized window functions to retrieve the top 10 outputs in descending order.
 -- We utilized joins to retrieve data from two tables.
 
-	select * 
-	from (
-		select s.subject,count(1) as no_of_paintings
-		,rank() over(order by count(1) desc) as ranking
-		from work w
-		join subject s on s.work_id=w.work_id
-		group by s.subject ) x
+select * 
+from (
+	select s.subject,count(1) as no_of_paintings
+	,rank() over(order by count(1) desc) as ranking
+	from work w
+	join subject s on s.work_id=w.work_id
+	group by s.subject ) x
 	where ranking <= 10;
 
 -- Identify the museums which are open on both Sunday and Monday. Display museum name, city?
@@ -126,14 +127,14 @@ from (select museum_id, count(1) AS count_of_entries
 /* The Metropolitan Museum of Art, Rijksmuseum, National Gallery, National Gallery of Art,
 The Barnes Foundation are top 5 most popular museum. */
 
-	select m.name as museum, m.city,m.country,x.no_of_painintgs
-	from (	select m.museum_id, count(1) as no_of_painintgs
-			, rank() over(order by count(1) desc) as rnk
-			from work w
-			join museum m on m.museum_id=w.museum_id
-			group by m.museum_id) x
-	join museum m on m.museum_id=x.museum_id
-	where x.rnk<=5;
+select m.name as museum, m.city,m.country,x.no_of_painintgs
+from (	select m.museum_id, count(1) as no_of_painintgs
+		, rank() over(order by count(1) desc) as rnk
+		from work w
+		join museum m on m.museum_id=w.museum_id
+		group by m.museum_id) x
+join museum m on m.museum_id=x.museum_id
+where x.rnk<=5;
 
 
 /*  Who are the top 5 most popular artist? 
@@ -168,7 +169,7 @@ WHERE x.ranking <= 3;
 /* Which museum is open for the longest during a day. 
 Dispay museum name, state and hours open and which day?*/
 
--- Musée du Louvre  museum is open for the longest during a day.
+-- MusÃ©e du Louvre  museum is open for the longest during a day.
 
 SELECT museum_name, city, day, open_time, close_time, duration
 FROM (
@@ -186,41 +187,41 @@ WHERE x.rnk = 1;
 -- The Metropolitan Museum of Art museum has the most no of most popular painting style.
 
 
-	with pop_style as 
-			(select style
-			,rank() over(order by count(1) desc) as rnk
-			from work
-			group by style),
-		cte as
-			(select w.museum_id,m.name as museum_name,ps.style, count(1) as no_of_paintings
-			,rank() over(order by count(1) desc) as rnk
-			from work w
-			join museum m on m.museum_id=w.museum_id
-			join pop_style ps on ps.style = w.style
-			where w.museum_id is not null
-			and ps.rnk=1
-			group by w.museum_id, m.name,ps.style)
-	select museum_name,style,no_of_paintings
-	from cte 
-	where rnk=1;
+with pop_style as 
+		(select style
+		,rank() over(order by count(1) desc) as rnk
+		from work
+		group by style),
+	cte as
+		(select w.museum_id,m.name as museum_name,ps.style, count(1) as no_of_paintings
+		,rank() over(order by count(1) desc) as rnk
+		from work w
+		join museum m on m.museum_id=w.museum_id
+		join pop_style ps on ps.style = w.style
+		where w.museum_id is not null
+		and ps.rnk=1
+		group by w.museum_id, m.name,ps.style)
+select museum_name,style,no_of_paintings
+from cte 
+where rnk=1;
 
 
 -- Identify the artists whose paintings are displayed in multiple countries?
 -- There are total 194 artists whose paintings are displayed in multiple countries
 
 
-	with cte as
-		(select distinct a.full_name as artist
-		--, w.name as painting, m.name as museum
-		, m.country
-		from work w
-		join artist a on a.artist_id=w.artist_id
-		join museum m on m.museum_id=w.museum_id)
-	select artist,count(1) as no_of_countries
-	from cte
-	group by artist
-	having count(1)>1
-	order by 2 desc;
+with cte as
+	(select distinct a.full_name as artist
+	--, w.name as painting, m.name as museum
+	, m.country
+	from work w
+	join artist a on a.artist_id=w.artist_id
+	join museum m on m.museum_id=w.museum_id)
+select artist,count(1) as no_of_countries
+from cte
+group by artist
+having count(1)>1
+order by 2 desc;
 
 
 /*Display the country and the city with most no of museums. Output 2 seperate columns 
@@ -280,15 +281,15 @@ WHERE rnk = 1 OR rnk_asc = 1;
 -- Spain country has the 5th highest no of paintings.
 
 
-	with cte as 
-		(select m.country, count(1) as no_of_Paintings
-		, rank() over(order by count(1) desc) as rnk
-		from work w
-		join museum m on m.museum_id=w.museum_id
-		group by m.country)
-	select country, no_of_Paintings
-	from cte 
-	where rnk=5;
+with cte as 
+	(select m.country, count(1) as no_of_Paintings
+	, rank() over(order by count(1) desc) as rnk
+	from work w
+	join museum m on m.museum_id=w.museum_id
+	group by m.country)
+select country, no_of_Paintings
+from cte 
+where rnk=5;
 
 -- Which are the 3 most popular and 3 least popular painting styles?
 
@@ -296,34 +297,34 @@ WHERE rnk = 1 OR rnk_asc = 1;
 -- Avant-Garde, Art Nouveau, Japanese Art 3 least popular painting styles.
 
 
-	with cte as 
-		(select style, count(1) as cnt
-		, rank() over(order by count(1) desc) rnk
-		, count(1) over() as no_of_records
-		from work
-		where style is not null
-		group by style)
-	select style
-	, case when rnk <=3 then 'Most Popular' else 'Least Popular' end as remarks 
-	from cte
-	where rnk <=3
-	or rnk > no_of_records - 3;
+with cte as 
+	(select style, count(1) as cnt
+	, rank() over(order by count(1) desc) rnk
+	, count(1) over() as no_of_records
+	from work
+	where style is not null
+	group by style)
+select style
+, case when rnk <=3 then 'Most Popular' else 'Least Popular' end as remarks 
+from cte
+where rnk <=3
+or rnk > no_of_records - 3;
 
 
 /* Which artist has the most no of Portraits paintings outside USA?. Display artist name,
 no of paintings and the artist nationality.*/
 
-	select full_name as artist_name, nationality, no_of_paintings
-	from (
-		select a.full_name, a.nationality
-		,count(1) as no_of_paintings
-		,rank() over(order by count(1) desc) as rnk
-		from work w
-		join artist a on a.artist_id=w.artist_id
-		join subject s on s.work_id=w.work_id
-		join museum m on m.museum_id=w.museum_id
-		where s.subject='Portraits'
-		and m.country != 'USA'
-		group by a.full_name, a.nationality) x
-	where rnk=1;	
+select full_name as artist_name, nationality, no_of_paintings
+from (
+	select a.full_name, a.nationality
+	,count(1) as no_of_paintings
+	,rank() over(order by count(1) desc) as rnk
+	from work w
+	join artist a on a.artist_id=w.artist_id
+	join subject s on s.work_id=w.work_id
+	join museum m on m.museum_id=w.museum_id
+	where s.subject='Portraits'
+	and m.country != 'USA'
+	group by a.full_name, a.nationality) x
+where rnk=1;	
 
