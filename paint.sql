@@ -1,36 +1,61 @@
 -- Using database painting
 use painting;
 
+-- Retrieve all records from the artist's table
 select * from artist;
+
+-- Retrieve all records from the canvas_size table
 select * from canvas_size;
+
+-- Retrieve all records from the image_link table
 select * from image_link;
+
+-- Retrieve all records from the museum table
 select * from museum;
+
+-- Retrieve all records from the museum_hours table
 select * from museum_hours;
+
+-- Retrieve all records from the product_size table
 select * from product_size;
+
+-- Retrieve all records from the subject table
 select * from subject;
+
+-- Retrieve all records from the work table
 select * from work;
+
+-- Retrieve all records from the product_size1 table
 select * from product_size1;
 
 
--- Checking the datatype of the column size_id.
+
+-- Retrieve the data type of the 'size_id' column in the 'product_size1' table
 SELECT data_type
 FROM information_schema.columns
 WHERE table_name = 'product_size1'
 AND column_name = 'size_id';
 
--- Fetch all the paintings which are not displayed in any museums?
--- In Total we got 10223 rows as output which are not displayed in any museum.
 
-select * from work where museum_id is null;
+-- Fetch all the paintings which are not displayed in any museums
+-- In total, we got 10223 rows as output which are not displayed in any museum
+
+SELECT * 
+FROM work 
+WHERE museum_id IS NULL;
+
 
 
 -- Are there museums without any paintings?
 /* For this task, we utilized a correlated subquery to identify museum IDs that do not match 
-between two tables, So there were no museums without painting*/
+between two tables. Based on the results, there were no museums without paintings. */
 
-select * from museum m
-where not exists (select 1 from work w
-where w.museum_id=m.museum_id)
+SELECT * 
+FROM museum m
+WHERE NOT EXISTS (SELECT 1 
+                  FROM work w
+                  WHERE w.museum_id = m.museum_id);
+
 
 
 -- How many paintings have an asking price of more than their regular price? 
@@ -40,15 +65,15 @@ select * from product_size
 where sale_price > regular_price;
 
 
--- Identify the paintings whose asking price is less than 50% of its regular price?
--- There are a total 58 painting who's asking price is less than 50% of its regular price.
+-- Identify the paintings whose asking price is less than 50% of their regular price?
+-- There are a total of 58 paintings who's asking price is less than 50% of its regular price.
 
 select * 
 from product_size
 where sale_price < (regular_price*0.5);
 
 
--- Which canva size costs the most?
+-- Which canvas size costs the most?
 -- using window function, subquery, and joins.
 -- 48" x 96"(122 cm x 244 cm) canva size cost the most 1115/- .
 
@@ -92,6 +117,8 @@ from (
 	group by s.subject ) x
 	where ranking <= 10;
 
+
+
 -- Identify the museums which are open on both Sunday and Monday. Display museum name, city?
 -- There are total 28 museums which are open on both Sunday as well as Monday
 
@@ -104,12 +131,16 @@ and exists (select 1 from museum_hours mh2
 			where mh2.museum_id=mh.museum_id 
 			and mh2.day='Monday');
 
--- Using self join and inner join:
+
+
+-- Retrieve the names and cities of museums that have entries for both Sunday and Monday in the museum_hours table
+
 SELECT m.[name], m.city
 FROM museum_hours mh1
 JOIN museum_hours mh2 ON mh1.museum_id = mh2.museum_id
 JOIN museum m ON mh1.museum_id = m.museum_id
 WHERE mh1.day = 'Sunday' AND mh2.day = 'Monday';
+
 
 
 -- How many museums are open every single day?
@@ -120,6 +151,8 @@ from (select museum_id, count(1) AS count_of_entries
 		 from museum_hours
 		 group by museum_id
 		 having count(1) = 7) x;
+
+
 
 /* Which are the top 5 most popular museum? 
 (Popularity is defined based on most no of paintings in a museum)?*/
@@ -152,7 +185,7 @@ from (	select a.artist_id, count(1) as no_of_painintgs
 join artist a on a.artist_id=x.artist_id
 where x.rnk<=5;
 
---  Display the 3 least popular canva sizes
+--  Display the 3 least popular Canva sizes
 
 SELECT label, ranking, no_of_paintings
 FROM (
@@ -166,10 +199,10 @@ FROM (
 WHERE x.ranking <= 3;
 
 
-/* Which museum is open for the longest during a day. 
-Dispay museum name, state and hours open and which day?*/
+/* Which museum is open for the longest during the day, 
+Display the museum name, state and hours open and which day?*/
 
--- Musée du Louvre  museum is open for the longest during a day.
+-- Musée du Louvre  museum is open for the longest during the day.
 
 SELECT museum_name, city, day, open_time, close_time, duration
 FROM (
@@ -183,9 +216,10 @@ FROM (
 ) x
 WHERE x.rnk = 1;
 
+
+
 -- Which museum has the most no of most popular painting style?
 -- The Metropolitan Museum of Art museum has the most no of most popular painting style.
-
 
 with pop_style as 
 		(select style
@@ -209,7 +243,6 @@ where rnk=1;
 -- Identify the artists whose paintings are displayed in multiple countries?
 -- There are total 194 artists whose paintings are displayed in multiple countries
 
-
 with cte as
 	(select distinct a.full_name as artist
 	--, w.name as painting, m.name as museum
@@ -228,8 +261,6 @@ order by 2 desc;
 to mention the city and country. If there are multiple value, seperate them with comma.? */
 
 -- USA, Washington country and the city with most no of museums.
-
-
 WITH cte_country AS (
     SELECT country, COUNT(1) AS country_count,
            RANK() OVER (ORDER BY COUNT(1) DESC) AS country_rnk
@@ -253,6 +284,8 @@ SELECT
         FROM cte_city
         WHERE city_rnk = 1
     ) AS most_common_city;
+
+
 
 /*Identify the artist and the museum where the most expensive and least expensive painting is placed. 
 Display the artist name, sale_price, painting name, museum name, museum city and canvas label*/
@@ -280,7 +313,6 @@ WHERE rnk = 1 OR rnk_asc = 1;
 -- Which country has the 5th highest no of paintings?
 -- Spain country has the 5th highest no of paintings.
 
-
 with cte as 
 	(select m.country, count(1) as no_of_Paintings
 	, rank() over(order by count(1) desc) as rnk
@@ -291,12 +323,11 @@ select country, no_of_Paintings
 from cte 
 where rnk=5;
 
+
 -- Which are the 3 most popular and 3 least popular painting styles?
 
 -- Impressionism, Post-Impressionism, Realism are 3 most popular painting styles.
 -- Avant-Garde, Art Nouveau, Japanese Art 3 least popular painting styles.
-
-
 with cte as 
 	(select style, count(1) as cnt
 	, rank() over(order by count(1) desc) rnk
@@ -311,8 +342,9 @@ where rnk <=3
 or rnk > no_of_records - 3;
 
 
-/* Which artist has the most no of Portraits paintings outside USA?. Display artist name,
-no of paintings and the artist nationality.*/
+
+/* Which artist has the most no of Portraits paintings outside the USA?. Display artist's name,
+no of paintings and the artist's nationality.*/
 
 select full_name as artist_name, nationality, no_of_paintings
 from (
